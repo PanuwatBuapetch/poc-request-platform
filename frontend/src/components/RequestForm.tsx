@@ -1,5 +1,6 @@
 import React from "react";
 
+// 📦 กำหนดชนิดข้อมูลของ Props (สัญญาระหว่างคลาสแม่และคลาสลูก)
 interface FormData {
   title: string;
   request_type: string;
@@ -9,8 +10,9 @@ interface FormData {
 }
 
 interface FormProps {
-  formData: FormData;
-  editingId: number | null;
+  formData: FormData; // ข้อมูลที่ผูกอยู่บน Input ทุกช่อง
+  editingId: number | null; // สถานะ ID ที่กำลังแก้ไข (ถ้าไม่มีจะเป็น null)
+  // ฟังก์ชัน Callback ส่งกลับไปหาคลาสแม่เมื่อมีการทำงานเกิดขึ้น
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
@@ -27,17 +29,19 @@ export default function RequestForm({
 }: FormProps) {
   return (
     <div style={{ background: "#f5f5f5", padding: "20px", borderRadius: "8px", marginBottom: "24px" }}>
+      {/* 💡 เงื่อนไขสลับหัวข้อ (Conditional Rendering): ถ้ามี editingId จะแสดงคำว่า แก้ไขข้อมูล ถ้าไม่มีจะแสดง เพิ่มรายการใหม่ */}
       <h3>{editingId ? "📝 แก้ไขข้อมูล Request" : "➕ เพิ่มรายการ Request ใหม่"}</h3>
+      
       <form onSubmit={onSubmit}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
           
-          {/* หัวข้อ Request */}
+          {/* ช่องกรอกหัวข้อ Request */}
           <div>
             <label htmlFor="title">หัวข้อ Request *:</label>
             <input id="title" type="text" name="title" value={formData.title} onChange={onInputChange} style={{ width: "100%", padding: "6px" }} />
           </div>
 
-          {/* ประเภท Request */}
+          {/* ช่องเลือกประเภทบริการ (Dropdown/Select) */}
           <div>
             <label htmlFor="request_type">ประเภท Request *:</label>
             <select id="request_type" name="request_type" value={formData.request_type} onChange={onInputChange} style={{ width: "100%", padding: "6px" }}>
@@ -48,29 +52,31 @@ export default function RequestForm({
             </select>
           </div>
 
-          {/* ชื่อผู้ส่ง Request */}
+          {/* ช่องกรอกชื่อผู้ส่ง */}
           <div>
             <label htmlFor="requester_name">ชื่อผู้ส่ง Request *:</label>
             <input id="requester_name" type="text" name="requester_name" value={formData.requester_name} onChange={onInputChange} style={{ width: "100%", padding: "6px" }} />
           </div>
 
-          {/* อีเมลผู้ส่ง Request */}
+          {/* ช่องกรอกอีเมล */}
           <div>
             <label htmlFor="requester_email">อีเมลผู้ส่ง Request *:</label>
             <input id="requester_email" type="email" name="requester_email" value={formData.requester_email} onChange={onInputChange} style={{ width: "100%", padding: "6px" }} />
           </div>
         </div>
 
-        {/* รายละเอียด Request */}
+        {/* ช่องกรอกรายละเอียด (TextArea) */}
         <div style={{ marginBottom: "12px" }}>
           <label htmlFor="description">รายละเอียด Request *:</label>
           <textarea id="description" name="description" value={formData.description} onChange={onInputChange} rows={3} style={{ width: "100%", padding: "6px" }} />
         </div>
 
+        {/* ปุ่มบันทึกข้อมูลหลัก: สลับสีและข้อความตามสถานะการทำงาน (เพิ่ม = สีเขียว, แก้ไข = สีส้ม) */}
         <button type="submit" style={{ background: editingId ? "#e67e22" : "#2ecc71", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "4px", cursor: "pointer", marginRight: "8px" }}>
           {editingId ? "บันทึกการเปลี่ยนแปลง" : "บันทึก"}
         </button>
         
+        {/* 💡 ลอจิกซ่อนปุ่ม (Short-circuit Evaluation): ปุ่มยกเลิกและปุ่มลบ จะปรากฏขึ้นมาก็ต่อเมื่อระบบอยู่ในโหมด "แก้ไขข้อมูล" (editingId มีค่า) เท่านั้น */}
         {editingId && (
           <>
             <button type="button" onClick={onCancel} style={{ background: "#7f8c8d", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "4px", cursor: "pointer", marginRight: "8px" }}>

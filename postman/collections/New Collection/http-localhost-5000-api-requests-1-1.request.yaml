@@ -1,0 +1,5 @@
+$kind: http-request
+name: http://localhost:5000/api/requests/1
+url: http://localhost:5000/api/requests/1
+method: GET
+order: 1781531394078

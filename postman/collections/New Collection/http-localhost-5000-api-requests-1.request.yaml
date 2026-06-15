@@ -1,0 +1,24 @@
+$kind: http-request
+name: http://localhost:5000/api/requests/1
+url: http://localhost:5000/api/requests/1
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \    \"id\": 1,\r
+
+    \    \"title\": \"ตรวจบทความวิจัยด้าน IoT\",\r
+
+    \    \"request_type\": \"บริการตรวจการคัดลอกผลงาน (iThenticate)\",\r
+
+    \    \"requester_name\": \"ดร.ภานุวัฒน์ บัวเพชร\",\r
+
+    \    \"requester_email\": \"panuwat.b@psu.ac.th\",\r
+
+    \    \"description\": \"รบกวนช่วยตรวจสอบเปอร์เซ็นต์การคัดลอกผลงานก่อนส่งตีพิมพ์วารสารนานาชาติ\",\r
+
+    \    \"created_at\": \"2026-06-08T06:09:33.372Z\"\r
+
+    }"
+order: 415810001618465

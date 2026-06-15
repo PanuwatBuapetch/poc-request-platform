@@ -10,11 +10,11 @@ interface RequestItem {
 }
 
 interface TableProps {
-  requests: RequestItem[];
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  onEditClick: (id: number) => void;
+  requests: RequestItem[]; // อาเรย์ข้อมูลที่จะนำมาลูปแสดงผลในตาราง
+  currentPage: number;     // หน้าปัจจุบัน
+  totalPages: number;      // จำนวนหน้าทั้งหมด
+  onPageChange: (page: number) => void; // ฟังก์ชันสั่งเปลี่ยนหน้าเมื่อกดปุ่ม
+  onEditClick: (id: number) => void;    // ฟังก์ชันสั่งเลือกแถวมาแก้ไขข้อมูล
 }
 
 export default function RequestTable({
@@ -30,16 +30,19 @@ export default function RequestTable({
       <table border={1} cellPadding={8} style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", marginBottom: "16px" }}>
         <thead style={{ background: "#34495e", color: "#fff" }}>
           <tr>
-            <th>1. เลขที่ (ID)</th>
-            <th>2. หัวข้อ</th>
-            <th>3. ประเภท</th>
-            <th>4. ชื่อผู้ส่งคำขอ</th>
-            <th>5. อีเมลผู้ส่งคำขอ</th>
-            <th>6. วันที่สร้าง</th>
+            <th>เลขที่ (ID)</th>
+            <th>หัวข้อ</th>
+            <th>ประเภท</th>
+            <th>ชื่อผู้ส่งคำขอ</th>
+            <th>อีเมลผู้ส่งคำขอ</th>
+            <th>วันที่สร้าง</th>
             <th>จัดการข้อมูล</th>
           </tr>
         </thead>
         <tbody>
+          {/* 💡 ลอจิกตรวจสอบข้อมูลว่างเปล่า (Ternary Operator): 
+              ถ้าอาเรย์ `requests` มีความยาวเป็น 0 ให้แสดงข้อความว่า ไม่พบข้อมูล 
+              แต่ถ้ามีข้อมูล ให้เข้าลูป .map() เพื่อกางข้อมูลออกมาเป็นแถวตาราง */}
           {requests.length === 0 ? (
             <tr>
               <td colSpan={7} style={{ textAlign: "center" }}>ไม่พบข้อมูลรายการคำขอในระบบ</td>
@@ -47,13 +50,16 @@ export default function RequestTable({
           ) : (
             requests.map((item) => (
               <tr key={item.id}>
+                {/* พ่นค่า ID, หัวข้อ, ประเภท, ชื่อ และอีเมล ลงในแต่ละ Cell */}
                 <td>{item.id}</td>
                 <td>{item.title}</td>
                 <td>{item.request_type}</td>
                 <td>{item.requester_name}</td>
                 <td>{item.requester_email}</td>
+                {/* แปลงรูปแบบวันที่ (Timestamp) จากหลังบ้านให้เป็นภาษาไทยและรูปแบบท้องถิ่น */}
                 <td>{new Date(item.created_at).toLocaleString("th-TH")}</td>
                 <td>
+                  {/* ปุ่มดึงข้อมูลย้อนกลับไปยังฟังก์ชัน handleEditClick ของไฟล์แม่ โดยส่งไอดี (item.id) ติดไปด้วย */}
                   <button 
                     onClick={() => onEditClick(item.id)} 
                     style={{ background: "#3498db", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer" }}
@@ -67,8 +73,9 @@ export default function RequestTable({
         </tbody>
       </table>
 
-      {/* บล็อกควบคุมระบบ Pagination */}
+      {/* 🧭 บล็อกควบคุมระบบ Pagination */}
       <div style={{ display: "flex", justifyContent: "center", gap: "8px" }}>
+        {/* ปุ่มย้อนกลับ: จะกดไม่ได้ (disabled) หากหน้าปัจจุบันอยู่ที่หน้า 1 */}
         <button 
           disabled={currentPage === 1} 
           onClick={() => onPageChange(currentPage - 1)} 
@@ -76,7 +83,10 @@ export default function RequestTable({
         >
           ก่อนหน้า
         </button>
+        
         <span style={{ alignSelf: "center" }}>หน้า {currentPage} จาก {totalPages}</span>
+        
+        {/* ปุ่มถัดไป: จะกดไม่ได้ (disabled) หากหน้าปัจจุบันเท่ากับจำนวนหน้าทั้งหมด (totalPages) */}
         <button 
           disabled={currentPage === totalPages} 
           onClick={() => onPageChange(currentPage + 1)} 

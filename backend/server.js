@@ -6,14 +6,15 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
 
 const { Pool } = pg;
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:1234@localhost:5432/poc_request_management'
+  // 💡 ส่งค่า URL เต็มเส้นให้ connectionString จุดเดียวจบเลยครับ ปลอดภัยและไม่ชนแน่นอน!
+  connectionString: process.env.DATABASE_URL
 });
 
 const query = (text, params) => pool.query(text, params);
