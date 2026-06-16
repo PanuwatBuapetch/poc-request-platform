@@ -1,12 +1,12 @@
 $kind: http-request
-name: http://localhost:5000/api/requests/1
-url: http://localhost:5000/api/requests/1
-method: PUT
+name: http://localhost:5000/api/requests
+url: http://localhost:5000/api/requests
+method: POST
 body:
   type: json
   content: "{\r
 
-    \    \"id\": 13,\r
+    \    \"id\": 12,\r
 
     \    \"title\": \"TEST\",\r
 
@@ -18,7 +18,7 @@ body:
 
     \    \"description\": \"TESTดิ\",\r
 
-    \    \"created_at\": \"2026-06-16T01:24:41.613Z\"\r
+    \    \"created_at\": \"\"\r
 
     }"
-order: 415810001618465
+order: 4092532819601163
