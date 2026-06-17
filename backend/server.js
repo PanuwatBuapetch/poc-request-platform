@@ -202,6 +202,53 @@ app.delete('/api/requests/:id', async (req, res) => {
   }
 });
 
+
+// ========================================================
+// 🔒 [AUTHENTICATION] 2.2.1 ระบบยืนยันตัวตนผู้ดูแลระบบ (Admin Login)
+// ========================================================
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  // 1. ตรวจสอบความครบถ้วนของข้อมูลนำเข้า
+  if (!username || !password) {
+    res.status(400).json({ error: 'กรุณากรอก Username และ Password ให้ครบถ้วน' });
+    return;
+  }
+
+  try {
+    // 2. ค้นหาบัญชีผู้ใช้ในฐานข้อมูลที่มีระดับสิทธิ์เป็น admin
+    const sql = 'SELECT id, username, password, role FROM users WHERE username = $1 AND role = \'admin\'';
+    const result = await query(sql, [username]);
+
+    if (result.rows.length === 0) {
+      res.status(401).json({ error: 'ไม่พบชื่อบัญชีผู้ดูแลระบบนี้ในระบบ' });
+      return;
+    }
+
+    const adminUser = result.rows[0];
+
+    // 3. ตรวจสอบความถูกต้องของรหัสผ่าน
+    if (adminUser.password !== password) {
+      res.status(401).json({ error: 'รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง' });
+      return;
+    }
+
+    // 4. หากผ่านเงื่อนไขทั้งหมด ส่งข้อมูลยืนยันสถานะการเข้าสู่ระบบกลับไปหาหน้าบ้าน
+    res.json({
+      message: 'เข้าสู่ระบบในฐานะผู้ดูแลสำเร็จ',
+      user: {
+        id: adminUser.id,
+        username: adminUser.username,
+        role: adminUser.role
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูลล็อกอิน' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

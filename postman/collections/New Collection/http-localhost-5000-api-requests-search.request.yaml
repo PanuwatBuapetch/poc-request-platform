@@ -1,0 +1,14 @@
+$kind: http-request
+name: http://localhost:5000/api/requests/search
+url: http://localhost:5000/api/requests/search?title=ทดสอบ
+method: GET
+headers:
+  - key: ""
+    value: ""
+    disabled: true
+queryParams:
+  title: ทดสอบ
+body:
+  type: json
+  content: ""
+order: 4250541926840687

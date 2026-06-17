@@ -1,73 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import axios from "axios";
 
 interface LoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (adminData: { username: string; role: string }) => void;
+  onSkipToUser: () => void;
 }
 
-export default function Login({ onLoginSuccess }: LoginProps) {
-  const [username, setUsername] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [error, setError] = useState<string>('');
+export default function Login({ onLoginSuccess, onSkipToUser }: LoginProps) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    try {
+      // ยิงไปหา API เส้นที่เราเพิ่งเขียนและเทสผ่าน Postman เมื่อกี้เป๊ะๆ
+      const response = await axios.post("http://localhost:5000/api/login", {
+        username,
+        password,
+      });
 
-    // Hardcoded check for demonstration; replace this with your server API request
-    if (username === 'admin' && password === 'password123') {
-      localStorage.setItem('isAdminAuthenticated', 'true');
-      onLoginSuccess();
-    } else {
-      setError('Invalid admin credentials. Please try again.');
+      alert(response.data.message);
+      // ส่งสิทธิ์แอดมินกลับไปบอกไฟล์แม่ (App.tsx)
+      onLoginSuccess(response.data.user);
+    } catch (error: any) {
+      alert(error.response?.data?.error || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     }
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <h2 style={styles.title}>Admin Login</h2>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "#f0f2f5", fontFamily: "sans-serif" }}>
+      <div style={{ background: "#fff", padding: "40px", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", width: "100%", maxWidth: "400px" }}>
+        <h2 style={{ textAlign: "center", marginBottom: "24px", color: "#333" }}>🔒 Admin Login</h2>
+        <form onSubmit={handleFormSubmit}>
+          <div style={{ marginBottom: "16px" }}>
+            <label htmlFor="username" style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}>Username:</label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="กรอกชื่อผู้ใช้ (admin)"
+              style={{ width: "100%", padding: "10px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ccc" }}
+              required
+            />
+          </div>
+          <div style={{ marginBottom: "24px" }}>
+            <label htmlFor="password" style={{ display: "block", marginBottom: "8px", fontWeight: "bold" }}>Password:</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="กรอกรหัสผ่าน (password123)"
+              style={{ width: "100%", padding: "10px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ccc" }}
+              required
+            />
+          </div>
+          <button type="submit" style={{ width: "100%", padding: "12px", backgroundColor: "#198754", color: "white", border: "none", borderRadius: "4px", fontSize: "16px", cursor: "pointer", fontWeight: "bold", marginBottom: "12px" }}>
+            เข้าสู่ระบบแอดมิน
+          </button>
+        </form>
         
-        {error && <div style={styles.error}>{error}</div>}
+        <hr style={{ border: "0", borderTop: "1px solid #eee", margin: "20px 0" }} />
         
-        <div style={styles.inputGroup}>
-          <label htmlFor="username" style={styles.label}>Username</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={styles.input}
-            required
-          />
-        </div>
-
-        <div style={styles.inputGroup}>
-          <label htmlFor="password" style={styles.label}>Password</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-            required
-          />
-        </div>
-
-        <button type="submit" style={styles.button}>
-          Sign In
+        <button type="button" onClick={onSkipToUser} style={{ width: "100%", padding: "12px", backgroundColor: "#0d6efd", color: "white", border: "none", borderRadius: "4px", fontSize: "16px", cursor: "pointer", fontWeight: "bold" }}>
+          🙋‍♂️ เข้าใช้งานทั่วไป (โหมด User)
         </button>
-      </form>
+      </div>
     </div>
   );
 }
-
-const styles = {
-  container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f3f4f6', fontFamily: 'sans-serif' },
-  form: { backgroundColor: '#fff', padding: '40px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', width: '100%', maxWidth: '400px' },
-  title: { margin: '0 0 20px 0', textAlign: 'center' as const, color: '#1e293b' },
-  error: { color: '#ef4444', backgroundColor: '#fee2e2', padding: '10px', borderRadius: '4px', marginBottom: '15px', fontSize: '14px', textAlign: 'center' as const },
-  inputGroup: { marginBottom: '20px' },
-  label: { display: 'block', marginBottom: '5px', fontSize: '14px', color: '#4b5563' },
-  input: { width: '100%', padding: '10px', boxSizing: 'border-box' as const, border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '16px' },
-  button: { width: '100%', padding: '12px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '16px', cursor: 'pointer', fontWeight: 'bold' }
-};

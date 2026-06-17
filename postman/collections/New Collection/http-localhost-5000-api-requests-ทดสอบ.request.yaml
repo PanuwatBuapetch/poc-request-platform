@@ -1,5 +1,0 @@
-$kind: http-request
-name: http://localhost:5000/api/requests/ทดสอบ
-url: ""
-method: GET
-order: 4250541926840687
