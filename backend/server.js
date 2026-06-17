@@ -6,32 +6,32 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
 const { Pool } = pg;
 const pool = new Pool({
-  // 💡 ส่งค่า URL เต็มเส้นให้ connectionString จุดเดียวจบเลยครับ ปลอดภัยและไม่ชนแน่นอน!
   connectionString: process.env.DATABASE_URL
 });
 
 const query = (text, params) => pool.query(text, params);
 
+// ========================================================
 // [READ ALL] 2.1 แสดงรายการคำขอ (ครั้งละ 10 รายการ, เรียงจากน้อยไปมาก, ซ่อน Soft Delete)
+// ========================================================
 app.get('/api/requests', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    // กรองนับเฉพาะรายการที่ยังไม่โดนลบ (deleted_at IS NULL)
     const countResult = await query('SELECT COUNT(*) FROM requests WHERE deleted_at IS NULL');
     const totalRequests = parseInt(countResult.rows[0].count);
 
     const sql = `
-      SELECT id, title, request_type, requester_name, requester_email, created_at 
+      SELECT id, title, request_type, requester_name, requester_email, created_at, status, description
       FROM requests 
       WHERE deleted_at IS NULL 
       ORDER BY id ASC 
@@ -50,17 +50,17 @@ app.get('/api/requests', async (req, res) => {
   }
 });
 
-// [CREATE] 2.2 เพิ่มรายการ Request ใหม่ + ตรวจสอบข้อมูล (Server-side Validation)
+// ========================================================
+// [CREATE] 2.2 เพิ่มรายการ Request ใหม่ (เซ็ตเวลาสร้างครั้งแรก)
+// ========================================================
 app.post('/api/requests', async (req, res) => {
   const { title, request_type, requester_name, requester_email, description } = req.body;
 
-  // 2.2.2 & 2.2.3 ตรวจสอบ Input ต้องกรอกครบถ้วน
   if (!title || !request_type || !requester_name || !requester_email || !description) {
     res.status(400).json({ error: 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนทุกช่อง' });
     return;
   }
 
-  // 2.2.3.4 ตรวจสอบรูปแบบอีเมล
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(requester_email)) {
     res.status(400).json({ error: 'รูปแบบอีเมลผู้ส่งคำขอไม่ถูกต้อง' });
@@ -69,11 +69,11 @@ app.post('/api/requests', async (req, res) => {
 
   try {
     const sql = `
-      INSERT INTO requests (title, request_type, requester_name, requester_email, description) 
-      VALUES ($1, $2, $3, $4, $5) 
-      RETURNING id, title, request_type, requester_name, requester_email, created_at
+      INSERT INTO requests (title, request_type, requester_name, requester_email, description, status, created_at) 
+      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP) 
+      RETURNING id, title, request_type, requester_name, requester_email, status, created_at
     `;
-    const result = await query(sql, [title, request_type, requester_name, requester_email, description]);
+    const result = await query(sql, [title, request_type, requester_name, requester_email, description, 'รอการดำเนินการ']);
     res.status(201).json({ message: 'บันทึกคำขอสำเร็จ', data: result.rows[0] });
   } catch (error) {
     console.error(error);
@@ -81,12 +81,47 @@ app.post('/api/requests', async (req, res) => {
   }
 });
 
-// [READ SINGLE] 2.3.2 ดึงรายละเอียด Request รายตัวสลัดลงฟอร์มแก้ไข
+// ========================================================
+// [SEARCH] ค้นหาข้อมูล Request (แก้ไขให้ส่งข้อมูลกลับไปหน้าบ้านสำเร็จจริง)
+// ========================================================
+app.get('/api/requests/search', async (req, res) => {
+  const { title, requester_name } = req.query;
+  try {
+    let sql = `
+        SELECT id, title, request_type, requester_name, requester_email, created_at, status, description
+        FROM requests 
+        WHERE deleted_at IS NULL
+    `;
+    const params = [];
+    let paramIndex = 1;
+
+    if (title) {
+      sql += ` AND title LIKE $${paramIndex++}`;
+      params.push(`%${title}%`);
+    }
+    
+    if (requester_name) {
+      sql += ` AND requester_name LIKE $${paramIndex++}`;
+      params.push(`%${requester_name}%`);
+    }
+
+    const result = await query(sql, params);
+    // 🌟 แก้ไข: ส่งผลลัพธ์ข้อมูลกลับไปหาหน้าบ้าน เพื่อไม่ให้ฟังก์ชันค้าง
+    res.json({ data: result.rows });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาดในการค้นหาข้อมูล' });
+  }
+});
+
+// ========================================================
+// [READ SINGLE] 2.3.2 ดึงรายละเอียด Request รายตัว
+// ========================================================
 app.get('/api/requests/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const sql = `
-      SELECT id, title, request_type, requester_name, requester_email, description, created_at 
+      SELECT id, title, request_type, requester_name, requester_email, description, status, created_at 
       FROM requests 
       WHERE id = $1 AND deleted_at IS NULL
     `;
@@ -102,14 +137,15 @@ app.get('/api/requests/:id', async (req, res) => {
   }
 });
 
-// [UPDATE] 2.3 แก้ไขข้อมูลรายการ Request
+// ========================================================
+// [UPDATE] 2.3 แก้ไขข้อมูลรายการ Request (สลักวันเวลาอัปเดตใหม่ล่าสุดอัตโนมัติ)
+// ========================================================
 app.put('/api/requests/:id', async (req, res) => {
   const { id } = req.params;
-  const { title, request_type, requester_name, requester_email, description } = req.body;
+  const { title, request_type, requester_name, requester_email, description, status } = req.body;
 
-  // 2.3.3 ตรวจสอบ Input แบบเดียวกับการเพิ่มข้อมูล
-  if (!title || !request_type || !requester_name || !requester_email || !description) {
-    res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง' });
+  if (!title || !request_type || !requester_name || !requester_email || !description || !status) {
+    res.status(400).json({ error: 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนทุกช่อง' });
     return;
   }
 
@@ -120,13 +156,21 @@ app.put('/api/requests/:id', async (req, res) => {
   }
 
   try {
+    // 🕒 มั่นใจได้ 100%: ทุกครั้งที่มีการกดบันทึกแก้ไขจากหน้าบ้าน ลอจิก SQL บรรทัดนี้จะบังคับอัปเดต
+    // ค่า created_at (หรือเวลาประวัติคำขอ) ให้เป็น CURRENT_TIMESTAMP ของวินาทีที่กดบันทึกจริงทันทีครับ
     const sql = `
       UPDATE requests 
-      SET title = $1, request_type = $2, requester_name = $3, requester_email = $4, description = $5 
-      WHERE id = $6 AND deleted_at IS NULL 
+      SET title = $1, request_type = $2, requester_name = $3, requester_email = $4, description = $5, status = $6, created_at = CURRENT_TIMESTAMP
+      WHERE id = $7 AND deleted_at IS NULL 
       RETURNING id
     `;
-    await query(sql, [title, request_type, requester_name, requester_email, description, id]);
+    const result = await query(sql, [title, request_type, requester_name, requester_email, description, status, id]);
+    
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'ไม่พบรายการคำขอนี้ หรืออาจถูกลบไปแล้ว' });
+      return;
+    }
+
     res.json({ message: 'อัปเดตข้อมูลสำเร็จ' });
   } catch (error) {
     console.error(error);
@@ -134,11 +178,12 @@ app.put('/api/requests/:id', async (req, res) => {
   }
 });
 
-// [DELETE] 2.4 ลบรายการ Request แบบ Soft Delete บันทึกวันเวลาลงเบส
+// ========================================================
+// [DELETE] 2.4 ลบรายการ Request แบบ Soft Delete
+// ========================================================
 app.delete('/api/requests/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    // 2.4.3 บันทึกวันและเวลาที่ลบ (CURRENT_TIMESTAMP) แทนการใช้ DELETE FROM
     const sql = `
       UPDATE requests 
       SET deleted_at = CURRENT_TIMESTAMP 
