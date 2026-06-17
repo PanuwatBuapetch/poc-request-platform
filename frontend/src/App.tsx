@@ -177,7 +177,7 @@ export default function App() {
   return (
     <div style={{ padding: "24px", fontFamily: "sans-serif", maxWidth: "1200px", margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2>POC - Request Management ({role === "admin" ? `👮‍♂️ โหมดแอดมิน: ${adminName}` : "🙋‍♂️ โหมดผู้ใช้ทั่วไป"})</h2>
+        <h2>POC - Request Management ({role === "admin" ? `ผู้ดูแลระบบ: ${adminName}` : `ผู้ใช้ทั่วไป`})</h2>
         <button onClick={handleLogout} style={{ padding: "8px 16px", backgroundColor: "#dc3545", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }}>
           ออกจากระบบ / สลับหน้า
         </button>
@@ -221,6 +221,7 @@ export default function App() {
         onPageChange={fetchRequests}
         onEditClick={handleEditClick}
         onSearchClick={handleSearchRequests}
+        role={role}
       />
     </div>
   );

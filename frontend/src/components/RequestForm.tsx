@@ -51,7 +51,7 @@ export default function RequestForm({
       }}
     >
       <h3>
-        {editingId ? "📝 แก้ไขข้อมูล Request (โหมดผู้ดูแลระบบ)" : "➕ เพิ่มรายการ Request ใหม่ (โหมดผู้ใช้งานทั่วไป)"}
+        {editingId ? "แก้ไขข้อมูล Request" : "➕ เพิ่มรายการ Request ใหม่"}
       </h3>
 
       <form onSubmit={onSubmit}>

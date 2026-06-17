@@ -8,27 +8,30 @@ interface RequestItem {
   requester_email: string;
   created_at: string;
   status: string; 
+  description: string; // มั่นใจว่า Interface รองรับฟิลด์ description
 }
 
 interface TableProps {
   requests: RequestItem[]; 
   currentPage: number;     
   totalPages: number;      
+  role: string; 
   onPageChange: (page: number) => void; 
   onEditClick: (id: number) => void;    
-  onSearchClick: (e: React.FormEvent) => void; // ปรับชนิดข้อมูลให้รองรับ FormEvent เหมือนใน App.tsx
+  onSearchClick: (e: React.FormEvent) => void; 
 }
 
 export default function RequestTable({
   requests,
   currentPage,
   totalPages,
+  role, 
   onPageChange,
   onEditClick,
   onSearchClick
 }: TableProps) {
   
-  // 🎨 ฟังก์ชันช่วยเลือกสีพื้นหลังของ Badge สถานะตามโจทย์ข้อสอง (ช่วยเพิ่มคะแนนความใส่ใจ UX)
+  // 🎨 ฟังก์ชันช่วยเลือกสีพื้นหลังของ Badge สถานะ
   const getStatusStyle = (status: string) => {
     switch (status) {
       case "รอการดำเนินการ":
@@ -49,7 +52,7 @@ export default function RequestTable({
     if (!timeStr) return "ไม่ระบุเวลา";
     try {
       const dateObj = new Date(timeStr);
-      if (isNaN(dateObj.getTime())) return timeStr; // ถ้าแปลงไม่ได้ให้คืนค่าข้อความดิบไปเลย ไม่ให้แอปพัง
+      if (isNaN(dateObj.getTime())) return timeStr; 
       return dateObj.toLocaleString("th-TH");
     } catch {
       return timeStr;
@@ -72,11 +75,10 @@ export default function RequestTable({
           </tr>
         </thead>
         <tbody>
-          {/* 💡 ลอจิกตรวจสอบข้อมูลว่างเปล่า */}
           {!requests || requests.length === 0 ? (
             <tr>
               <td colSpan={8} style={{ textAlign: "center", padding: "20px", color: "#7f8c8d" }}>
-                ❌ ไม่พบข้อมูลรายการคำขอที่ค้นหาในระบบ
+                ไม่พบข้อมูลรายการคำขอที่ค้นหาในระบบ
               </td>
             </tr>
           ) : (
@@ -89,29 +91,36 @@ export default function RequestTable({
                 <td>
                   <a href={`mailto:${item.requester_email}`}>{item.requester_email}</a>
                 </td>
-                {/* เรียกใช้ฟังก์ชัน Safe Formatter ป้องกันตารางขาวค้าง */}
                 <td>{formatTableTime(item.created_at)}</td>
                 <td>
-                  {/* แสดงผล Badge สีแยกประเภทสถานะชัดเจน */}
                   <span style={getStatusStyle(item.status)}>
                     {item.status || "ไม่ระบุสถานะ"}
                   </span>
                 </td>
+                
+                {/* 🔒 จัดสรรสิทธิ์ปุ่มเปิดดูรายละเอียดตามโจทย์ */}
                 <td>
-                  <button 
-                    onClick={() => onEditClick(item.id)} 
-                    style={{ background: "#3498db", color: "#fff", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}
-                  >
-                    🔍 ดูรายละเอียด / แก้ไข
-                  </button>
+                  {role === "admin" ? (
+                    // 👮‍♂️ สิทธิ์แอดมิน: กดเปิดขึ้นมาดูรายละเอียดคำอธิบายประกอบ และสลับแก้ไขสถานะได้แบบ Full Option
+                    <button 
+                      onClick={() => onEditClick(item.id)} 
+                      style={{ background: "#e67e22", color: "#fff", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}
+                    >
+                      📝 ตรวจสอบ & แก้ไขสถานะ
+                    </button>
+                  ) : (
+                    // 🙋‍♂️ สิทธิ์ผู้ใช้งานทั่วไป: ล็อกระบบไม่ให้เข้าถึงการจัดการหลังบ้าน
+                    <span style={{ color: "#7f8c8d", fontSize: "13px", fontStyle: "italic" }}>🔒 เฉพาะผู้ดูแลระบบ</span>
+                  )}
                 </td>
+
               </tr>
             ))
           )}
         </tbody>
       </table>
 
-      {/* 🧭 บล็อกควบคุมระบบ Pagination (จะซ่อนปุ่มอัตโนมัติหากผลลัพธ์ค้นหามีหน้าเดียว) */}
+      {/* 🧭 บล็อกควบคุมระบบ Pagination */}
       {totalPages > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginTop: "20px" }}>
           <button 

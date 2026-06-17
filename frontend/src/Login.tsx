@@ -64,7 +64,7 @@ export default function Login({ onLoginSuccess, onSkipToUser }: LoginProps) {
         <hr style={{ border: "0", borderTop: "1px solid #eee", margin: "20px 0" }} />
         
         <button type="button" onClick={onSkipToUser} style={{ width: "100%", padding: "12px", backgroundColor: "#0d6efd", color: "white", border: "none", borderRadius: "4px", fontSize: "16px", cursor: "pointer", fontWeight: "bold" }}>
-          🙋‍♂️ เข้าใช้งานทั่วไป (โหมด User)
+          เข้าใช้งานทั่วไป
         </button>
       </div>
     </div>
